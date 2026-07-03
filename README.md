@@ -1,6 +1,6 @@
 # lolesports-schedule
 
-Chrome extension popup widget for League of Legends esports match schedules. View upcoming matches from **LCK, LEC, MSI, Worlds, and the Esports World Cup** in one unified schedule, plus an optional toolbar LIVE badge for Twitch streamer **caedrel**.
+Chrome extension popup widget for League of Legends esports match schedules. View upcoming matches from **LCK, LEC, MSI, Worlds, and the Esports World Cup** in one unified schedule, plus an optional toolbar LIVE badge for Twitch streamer **Caedrel**.
 
 ## Features
 
@@ -20,8 +20,8 @@ Chrome extension popup widget for League of Legends esports match schedules. Vie
 - Tournament stage/week labels
 - Completed match scores
 - League badge (LCK, LEC, MSI, Worlds, EWC) on every match
-- Toolbar LIVE badge when **caedrel** is streaming on Twitch (optional, configurable in Settings)
-- **caedrel** button in popup → opens https://www.twitch.tv/caedrel
+- Toolbar LIVE badge when **Caedrel** is streaming on Twitch (optional, configurable in Settings)
+- **Caedrel** button in popup → opens https://www.twitch.tv/caedrel
 - Live match cards are clickable → opens https://www.twitch.tv/caedrel
 - Background service worker polls Twitch GQL every 2 minutes while the LIVE badge is enabled
 - Match times automatically displayed in the user's local timezone
@@ -40,7 +40,7 @@ Chrome extension popup widget for League of Legends esports match schedules. Vie
 6. Select the extracted project folder (the one containing `manifest.json`).
 7. (Optional) Pin the extension to the Chrome toolbar for quick access.
 8. Click the extension icon to open the schedule popup.
-9. Open **Settings (⚙)** and enable **Notify caedrel live** if you want a LIVE badge in the toolbar whenever caedrel is streaming.
+9. Open **Settings (⚙)** and enable **Notify Caedrel live** if you want a LIVE badge in the toolbar whenever Caedrel is streaming.
 
 
 ## Files
@@ -73,7 +73,7 @@ Supported leagues:
 
 ### Twitch Live Status
 
-Live status for **caedrel** is retrieved from Twitch's GraphQL endpoint:
+Live status for **Caedrel** is retrieved from Twitch's GraphQL endpoint:
 
 https://gql.twitch.tv/gql
 
