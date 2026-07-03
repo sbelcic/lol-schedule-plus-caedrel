@@ -26,16 +26,22 @@ Chrome extension popup widget for League of Legends esports match schedules. Vie
 - Background service worker polls Twitch GQL every 2 minutes while the LIVE badge is enabled
 - Match times automatically displayed in the user's local timezone
 
-## Install (Unpacked)
+## Install
 
-1. Open `chrome://extensions`
-2. Enable **Developer mode**
-3. Click **Load unpacked**
-4. Select this extension folder
-5. Pin the extension to the Chrome toolbar
-6. Click the extension icon
-7. Open **Settings (⚙)**
-8. Enable **Notify caedrel live** if you want the LIVE toolbar badge
+1. On GitHub, click **Code** → **Download ZIP**.
+2. Extract (unzip) the downloaded archive to a folder.
+3. Open Chrome and navigate to:
+
+   ```
+   chrome://extensions/
+   ```
+4. Enable **Developer mode** (top-right corner).
+5. Click **Load unpacked**.
+6. Select the extracted project folder (the one containing `manifest.json`).
+7. (Optional) Pin the extension to the Chrome toolbar for quick access.
+8. Click the extension icon to open the schedule popup.
+9. Open **Settings (⚙)** and enable **Notify caedrel live** if you want a LIVE badge in the toolbar whenever caedrel is streaming.
+
 
 ## Files
 
