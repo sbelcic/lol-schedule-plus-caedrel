@@ -78,3 +78,7 @@ Live status for **Caedrel** is retrieved from Twitch's GraphQL endpoint:
 https://gql.twitch.tv/gql
 
 using the same public web `Client-ID` used by twitch.tv.
+
+## Available at Google Chrome Web Store
+
+Available at Google Chrome Web Store on following link https://chromewebstore.google.com/detail/gjdnaghhcbglhnbjpffoojgphmpilibp
