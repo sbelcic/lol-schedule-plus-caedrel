@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LoL Schedule",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "LoL match schedule widget with Twitch caedrel live toolbar badge.",
   "permissions": ["alarms", "storage"],
   "host_permissions": [
