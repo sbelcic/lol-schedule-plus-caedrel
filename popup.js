@@ -6,7 +6,8 @@ const LEAGUES = {
   LEC: "98767991302996019",
   MSI: "98767991325878492",
   WORLDS: "98767975604431411",
-  EWC: "116838530616006090"
+  EWC: "116838530616006090",
+  KESPA: "116929044967296666"
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -109,7 +110,8 @@ function shortLeagueName(name) {
     "LEC": "LEC",
     "Mid-Season Invitational": "MSI",
     "World Championship": "Worlds",
-    "Esports World Cup": "EWC"
+    "Esports World Cup": "EWC",
+	"KeSPA Cup": "KESPA"
   };
 
   return map[name] || name;
