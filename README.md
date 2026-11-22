@@ -1,80 +1,41 @@
 # lolesports-schedule
 
-Chrome extension popup widget for League of Legends esports match schedules. View upcoming matches from **LCK, LEC, MSI, Worlds, and the Esports World Cup** in one unified schedule, plus an optional toolbar LIVE badge for Twitch streamer **Caedrel**.
+Chrome extension popup for League of Legends esports match schedules, with **live notifications for any Twitch streamers you choose**.
 
 ## Features
 
-- Unified schedule for:
-  - LCK (League of Legends Champions Korea)
-  - LEC (League of Legends EMEA Championship)
-  - Mid-Season Invitational (MSI)
-  - World Championship (Worlds)
-  - Esports World Cup (EWC)
-- Matches grouped into:
-  - Live
-  - Later Today
-  - Tomorrow
-  - Upcoming days
-- Team logos and team codes
-- Best-of (Bo3/Bo5/etc.) display
-- Tournament stage/week labels
-- Completed match scores
-- League badge (LCK, LEC, MSI, Worlds, EWC) on every match
-- Toolbar LIVE badge when **Caedrel** is streaming on Twitch (optional, configurable in Settings)
-- **Caedrel** button in popup → opens https://www.twitch.tv/caedrel
-- Live match cards are clickable → opens https://www.twitch.tv/caedrel
-- Background service worker polls Twitch GQL every 2 minutes while the LIVE badge is enabled
-- Match times automatically displayed in the user's local timezone
+- Unified schedule for LCK, LEC, MSI, Worlds, Esports World Cup, KeSPA Cup, LCS and Demacia Cup
+- Matches grouped into Live, Later today, Tomorrow and upcoming days; times shown in your local timezone
+- **Choose your leagues** in Settings: the full league list is loaded from Riot's `getLeagues` endpoint (cached 24 h) with search, select/clear and reset. Defaults to the original eight.
+- League filter chips, team logos, Bo format, stage/week labels and final scores
+- Instant open: the last schedule is cached and refreshed in the background
+- **Multiple streamers**: add any Twitch channel by name or URL (`twitch.tv/caedrel`, `@caedrel`, `caedrel`) in Settings (⚙). Up to 15.
+- Live streamers appear at the top of the popup with viewer counts
+- Toolbar badge: the first 4 letters of the streamer's name (e.g. `CAED`) when one is live, or the number of streamers live. Hover the icon for the full names.
+- Optional desktop notification when a tracked streamer goes live (click to open the channel)
+- Live match cards open the first live tracked streamer, or lolesports.com if nobody is live
+- Dark and light theme (follows your system)
 
 ## Install
 
-1. On GitHub, click **Code** → **Download ZIP**.
-2. Extract (unzip) the downloaded archive to a folder.
-3. Open Chrome and navigate to:
-
-   ```
-   chrome://extensions/
-   ```
-4. Enable **Developer mode** (top-right corner).
-5. Click **Load unpacked**.
-6. Select the extracted project folder (the one containing `manifest.json`).
-7. (Optional) Pin the extension to the Chrome toolbar for quick access.
-8. Click the extension icon to open the schedule popup.
-9. Open **Settings (⚙)** and enable **Notify Caedrel live** if you want a LIVE badge in the toolbar whenever Caedrel is streaming.
-
+1. Download this repository as a ZIP and extract it.
+2. Open `chrome://extensions/` and enable **Developer mode**.
+3. Click **Load unpacked** and select the folder containing `manifest.json`.
+4. Click the extension icon, open **Settings (⚙)**, add streamers and enable the badge and/or notifications.
 
 ## Files
 
 ```
-manifest.json    Manifest V3
-popup.html       Popup UI
-popup.js         Fetches and renders LoL Esports schedules
-background.js    Service worker, alarms, Twitch LIVE polling
-icons/           16/32/48/128 PNG icons
+manifest.json   Manifest V3
+shared.js       Twitch helpers (channel parsing, batched live lookup)
+popup.html/.css/.js   Popup UI
+background.js   Service worker: alarm polling at your chosen interval, badge, notifications
+icons/          16/32/48/128 PNG icons
 ```
 
-## Data Sources
+## Data sources
 
-### LoL Esports Schedule
+- Schedules: Riot's public LoL Esports API (`esports-api.lolesports.com`) using the public key bundled with lolesports.com.
+- Twitch status: Twitch GraphQL (`gql.twitch.tv`) using the public web Client-ID, one batched request for all streamers.
 
-Schedules are retrieved from Riot's public LoL Esports API endpoint:
-
-https://esports-api.lolesports.com/persisted/gw/getSchedule
-
-using the same public `x-api-key` bundled with the official lolesports.com website.
-
-Supported leagues:
-
-- LCK
-- LEC
-- Mid-Season Invitational (MSI)
-- World Championship (Worlds)
-- Esports World Cup (EWC)
-
-### Twitch Live Status
-
-Live status for **Caedrel** is retrieved from Twitch's GraphQL endpoint:
-
-https://gql.twitch.tv/gql
-
-using the same public web `Client-ID` used by twitch.tv.
+Polling only runs while the badge or notifications are enabled. The refresh interval (1–15 min, default 3) is set in Settings and applies to both the background live check and the popup's auto-refresh.

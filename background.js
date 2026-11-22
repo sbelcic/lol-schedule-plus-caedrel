@@ -1,30 +1,11 @@
-console.log("[LCK] background.js loaded at", new Date().toISOString());
-// Public Twitch web client-id (used by twitch.tv itself, embedded in every community Twitch tracker).
-const TWITCH_CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko";
-const TWITCH_GQL_URL = "https://gql.twitch.tv/gql";
-const STREAMER_LOGIN = "caedrel";
-const POLL_ALARM = "lck-poll";
-const POLL_PERIOD_MIN = 3;
-const BADGE_BG = "#9146ff";
+import { DEFAULT_STREAMERS, DEFAULT_REFRESH_MIN, fetchChannels, channelUrl } from "./shared.js";
 
-async function fetchStream() {
-  const body = [
-    {
-      query: `query($login: String!) { user(login: $login) { id displayName stream { id type title game { name } viewersCount } } }`,
-      variables: { login: STREAMER_LOGIN },
-    },
-  ];
-  const r = await fetch(TWITCH_GQL_URL, {
-    method: "POST",
-    headers: {
-      "Client-ID": TWITCH_CLIENT_ID,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!r.ok) throw new Error("HTTP " + r.status);
-  const json = await r.json();
-  return json?.[0]?.data?.user || null;
+const POLL_ALARM = "live-poll";
+const BADGE_BG = "#9146ff";
+const DEFAULTS = { streamers: DEFAULT_STREAMERS, notifyLive: false, desktopNotify: false, refreshMinutes: DEFAULT_REFRESH_MIN };
+
+async function settings() {
+  return chrome.storage.local.get({ ...DEFAULTS, liveLogins: [], liveInit: false });
 }
 
 async function clearBadge() {
@@ -32,87 +13,85 @@ async function clearBadge() {
   await chrome.action.setTitle({ title: "LoL Schedule" });
 }
 
-async function updateBadge(user) {
-  const { notifyLive = false } = await chrome.storage.local.get("notifyLive");
-  if (!notifyLive) {
-    await clearBadge();
-    return;
-  }
-  const stream = user?.stream;
-  console.log("[LCK] caedrel live:", !!stream);
-  if (!stream) {
-    await clearBadge();
-    return;
-  }
-  await chrome.action.setBadgeText({ text: "LIVE" });
+async function showBadge(live) {
+  if (!live.length) return clearBadge();
+  await chrome.action.setBadgeText({ text: live.length === 1 ? live[0].displayName.slice(0, 4).toUpperCase() : String(live.length) });
   await chrome.action.setBadgeBackgroundColor({ color: BADGE_BG });
-  if (chrome.action.setBadgeTextColor) {
-    await chrome.action.setBadgeTextColor({ color: "#ffffff" });
-  }
-  const name = user.displayName || STREAMER_LOGIN;
-  const game = stream.game?.name ? ` • ${stream.game.name}` : "";
-  const title = stream.title ? ` — ${stream.title}` : "";
-  await chrome.action.setTitle({
-    title: `${name} LIVE${game}${title}`,
+  if (chrome.action.setBadgeTextColor) await chrome.action.setBadgeTextColor({ color: "#ffffff" });
+  const lines = live.map((c) => `${c.displayName}${c.game ? " • " + c.game : ""}`);
+  await chrome.action.setTitle({ title: `Live now:\n${lines.join("\n")}` });
+}
+
+function notify(c) {
+  chrome.notifications.create(`live:${c.login}`, {
+    type: "basic",
+    iconUrl: "icons/icon-128.png",
+    title: `${c.displayName} is live`,
+    message: [c.game, c.title].filter(Boolean).join(" — ") || "Just went live on Twitch"
   });
 }
 
-async function ensureAlarm(periodInMinutes) {
+async function syncAlarm() {
+  const s = await settings();
+  const enabled = (s.notifyLive || s.desktopNotify) && s.streamers.length > 0;
   const existing = await chrome.alarms.get(POLL_ALARM);
-  if (!existing || Math.abs((existing.periodInMinutes || 0) - periodInMinutes) > 0.01) {
-    console.log("[LCK] alarm period →", periodInMinutes, "min");
-    chrome.alarms.create(POLL_ALARM, { periodInMinutes });
+  if (enabled && (!existing || existing.periodInMinutes !== s.refreshMinutes)) {
+    chrome.alarms.create(POLL_ALARM, { periodInMinutes: s.refreshMinutes });
   }
+  if (!enabled && existing) await chrome.alarms.clear(POLL_ALARM);
+  return enabled;
 }
 
-async function poll() {
+// baseline=true records who is live right now without sending notifications
+async function poll(baseline = false) {
   try {
-    const user = await fetchStream();
+    const enabled = await syncAlarm();
+    const s = await settings();
+    if (!enabled) {
+      await chrome.storage.local.set({ liveLogins: [], liveInit: false });
+      return clearBadge();
+    }
+    const channels = await fetchChannels(s.streamers);
+    const live = Object.values(channels).filter((c) => c?.live);
+
+    if (s.desktopNotify && s.liveInit && !baseline) {
+      const before = new Set(s.liveLogins);
+      live.filter((c) => !before.has(c.login)).forEach(notify);
+    }
     await chrome.storage.local.set({
-      lastStream: user,
-      lastFetched: Date.now(),
+      liveLogins: live.map((c) => c.login),
+      liveInit: true
     });
-    await updateBadge(user);
-    await ensureAlarm(POLL_PERIOD_MIN);
+
+    if (s.notifyLive) await showBadge(live);
+    else await clearBadge();
   } catch (e) {
-    console.error("[LCK] poll failed:", e.message);
+    console.error("[LoL Schedule] poll failed:", e.message);
   }
 }
 
-chrome.alarms.get(POLL_ALARM, (a) => {
-  if (!a) {
-    console.log("[LCK] creating alarm");
-    chrome.alarms.create(POLL_ALARM, { periodInMinutes: POLL_PERIOD_MIN });
-  }
+chrome.runtime.onInstalled.addListener(async () => {
+  const cur = await chrome.storage.local.get(["streamers"]);
+  if (!cur.streamers) await chrome.storage.local.set({ streamers: DEFAULT_STREAMERS });
+  await syncAlarm();
+  poll(true);
 });
 
-chrome.runtime.onInstalled.addListener(() => {
-  console.log("[LCK] onInstalled");
-  chrome.alarms.create(POLL_ALARM, { periodInMinutes: POLL_PERIOD_MIN });
-  poll();
-});
-
-chrome.runtime.onStartup.addListener(() => {
-  console.log("[LCK] onStartup");
-  chrome.alarms.create(POLL_ALARM, { periodInMinutes: POLL_PERIOD_MIN });
-  poll();
-});
+chrome.runtime.onStartup.addListener(() => poll(true));
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === POLL_ALARM) poll();
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.notifyLive) {
-    console.log("[LCK] notifyLive changed →", changes.notifyLive.newValue);
-    poll();
+  if (area === "local" && changes.refreshMinutes) syncAlarm();
+  if (area === "local" && (changes.streamers || changes.notifyLive || changes.desktopNotify)) {
+    poll(true);
   }
 });
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  console.log("[LCK] message received:", msg?.type);
-  if (msg?.type === "CHECK_LIVE_NOW") {
-    poll().then(() => sendResponse({ ok: true }));
-    return true;
-  }
+chrome.notifications.onClicked.addListener((id) => {
+  if (!id.startsWith("live:")) return;
+  chrome.tabs.create({ url: channelUrl(id.slice(5)) });
+  chrome.notifications.clear(id);
 });
